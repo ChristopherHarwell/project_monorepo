@@ -52,6 +52,11 @@ var (
 	updateMode = false
 	pushMode   = false
 	scanLocal  = false
+
+	configFile = "config.json"
+
+	githubAPIURL = "https://api.github.com"
+	gitlabAPIURL = "https://gitlab.com/api/v4"
 )
 
 func main() {
@@ -172,7 +177,7 @@ func handleUpdatesAndPushes(selected []Repo) {
 }
 
 func loadConfig() Config {
-	data, err := os.ReadFile("config.json")
+	data, err := os.ReadFile(configFile)
 	if err != nil {
 		panic("Missing config.json file with GitHub and GitLab tokens")
 	}
@@ -230,7 +235,7 @@ func githubHeaders(token string) map[string]string {
 }
 
 func fetchUserRepos(client *http.Client, headers map[string]string) []Repo {
-	return fetchGitHubRepoList(client, headers, "https://api.github.com/user/repos?per_page=100")
+	return fetchGitHubRepoList(client, headers, githubAPIURL+"/user/repos?per_page=100")
 }
 
 func fetchOrgRepos(client *http.Client, headers map[string]string) []Repo {
@@ -238,14 +243,14 @@ func fetchOrgRepos(client *http.Client, headers map[string]string) []Repo {
 	orgs := fetchOrganizations(client, headers)
 	
 	for _, org := range orgs {
-		orgURL := fmt.Sprintf("https://api.github.com/orgs/%s/repos?per_page=100", org["login"].(string))
+		orgURL := fmt.Sprintf(githubAPIURL+"/orgs/%s/repos?per_page=100", org["login"].(string))
 		orgRepos = append(orgRepos, fetchGitHubRepoList(client, headers, orgURL)...)
 	}
 	return orgRepos
 }
 
 func fetchOrganizations(client *http.Client, headers map[string]string) []map[string]interface{} {
-	req := createRequest("GET", "https://api.github.com/user/orgs", nil, headers)
+	req := createRequest("GET", githubAPIURL+"/user/orgs", nil, headers)
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil
@@ -308,7 +313,7 @@ func fetchGitLabRepos(token string) []Repo {
 }
 
 func createGitLabRequest(token string) *http.Request {
-	req, _ := http.NewRequest("GET", "https://gitlab.com/api/v4/projects?membership=true&per_page=100", nil)
+	req, _ := http.NewRequest("GET", gitlabAPIURL+"/projects?membership=true&per_page=100", nil)
 	req.Header.Add("PRIVATE-TOKEN", token)
 	return req
 }
