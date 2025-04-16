@@ -56,87 +56,118 @@ var (
 
 func main() {
 	cfg := loadConfig()
+	setupConfig(cfg)
 	ctx := context.Background()
 
+	if cfg.ScanLocal {
+		handleLocalRepos(cfg)
+	}
+
+	repos := getRepositories(ctx, cfg)
+	selected := selectRepositories(repos, cfg.AutoMode)
+	initMonorepo()
+	processRepositories(selected, cfg)
+}
+
+func setupConfig(cfg Config) {
 	useSubtree = cfg.UseSubtree
 	autoMode = cfg.AutoMode
 	updateMode = cfg.UpdateMode
 	pushMode = cfg.PushMode
 	scanLocal = cfg.ScanLocal
+}
 
-	if scanLocal {
-		fmt.Println("Scanning local repositories...")
-		if cfg.BaseDir == "" || cfg.MonorepoPath == "" {
-			fmt.Println("Error: 'base_dir' and 'monorepo_path' must be set in config.json when scan_local is true")
-			os.Exit(1)
-		}
-
-		localRepos, err := searchLocalRepos(cfg.BaseDir, cfg.MonorepoPath)
-		if err != nil {
-			fmt.Printf("Error scanning local repositories: %v\n", err)
-			os.Exit(1)
-		}
-
-		// Print found repositories
-		fmt.Println("\nFound repositories:")
-		fmt.Println("==================")
-		for _, repo := range localRepos {
-			status := "Not a Git repo"
-			if repo.IsGitRepo {
-				if repo.IsInMonorepo {
-					status = "In monorepo"
-				} else {
-					status = fmt.Sprintf("Git repo (branch: %s)", repo.DefaultBranch)
-				}
-			}
-			fmt.Printf("%s\n  Path: %s\n  Status: %s\n\n", repo.Name, repo.Path, status)
-		}
-
-		// Save results to a JSON file
-		data, _ := json.MarshalIndent(localRepos, "", "  ")
-		if err := os.WriteFile("local_repos.json", data, 0644); err != nil {
-			fmt.Printf("Error saving local repository data: %v\n", err)
-		} else {
-			fmt.Println("Local repository data saved to local_repos.json")
-		}
-
-		if !autoMode {
-			fmt.Print("Press Enter to continue with remote repository scanning or Ctrl+C to exit...")
-			bufio.NewReader(os.Stdin).ReadBytes('\n')
-		}
+func handleLocalRepos(cfg Config) {
+	fmt.Println("Scanning local repositories...")
+	if cfg.BaseDir == "" || cfg.MonorepoPath == "" {
+		fmt.Println("Error: 'base_dir' and 'monorepo_path' must be set in config.json when scan_local is true")
+		os.Exit(1)
 	}
 
+	localRepos, err := searchLocalRepos(cfg.BaseDir, cfg.MonorepoPath)
+	if err != nil {
+		fmt.Printf("Error scanning local repositories: %v\n", err)
+		os.Exit(1)
+	}
+
+	printLocalRepos(localRepos)
+	saveLocalReposData(localRepos)
+
+	if !autoMode {
+		promptContinue()
+	}
+}
+
+func printLocalRepos(localRepos []LocalRepo) {
+	fmt.Println("\nFound repositories:")
+	fmt.Println("==================")
+	for _, repo := range localRepos {
+		status := "Not a Git repo"
+		if repo.IsGitRepo {
+			if repo.IsInMonorepo {
+				status = "In monorepo"
+			} else {
+				status = fmt.Sprintf("Git repo (branch: %s)", repo.DefaultBranch)
+			}
+		}
+		fmt.Printf("%s\n  Path: %s\n  Status: %s\n\n", repo.Name, repo.Path, status)
+	}
+}
+
+func saveLocalReposData(localRepos []LocalRepo) {
+	data, _ := json.MarshalIndent(localRepos, "", "  ")
+	if err := os.WriteFile("local_repos.json", data, 0644); err != nil {
+		fmt.Printf("Error saving local repository data: %v\n", err)
+	} else {
+		fmt.Println("Local repository data saved to local_repos.json")
+	}
+}
+
+func promptContinue() {
+	fmt.Print("Press Enter to continue with remote repository scanning or Ctrl+C to exit...")
+	bufio.NewReader(os.Stdin).ReadBytes('\n')
+}
+
+func getRepositories(ctx context.Context, cfg Config) []Repo {
 	repos := loadCachedRepos()
 	if len(repos) == 0 {
 		fmt.Println("Fetching repos from GitHub and GitLab...")
 		repos = fetchAllRepos(ctx, cfg)
 		cacheRepos(repos)
 	}
+	return repos
+}
 
-	var selected []Repo
+func selectRepositories(repos []Repo, autoMode bool) []Repo {
 	if autoMode {
-		selected = repos
-	} else {
-		selected = interactiveSelectRepos(repos)
-		if len(selected) == 0 {
-			fmt.Println("No selection made. Defaulting to all repositories.")
-			selected = repos
-		}
+		return repos
 	}
+	
+	selected := interactiveSelectRepos(repos)
+	if len(selected) == 0 {
+		fmt.Println("No selection made. Defaulting to all repositories.")
+		return repos
+	}
+	return selected
+}
 
-	if !autoMode {
+func processRepositories(selected []Repo, cfg Config) {
+	if !cfg.AutoMode {
 		selectIntegrationMethod()
 	}
 
-	initMonorepo()
 	addRepos(selected)
+	handleUpdatesAndPushes(selected)
+}
 
-	if useSubtree && updateMode {
-		updateSubtrees(selected)
-	}
-
-	if useSubtree && pushMode {
-		pushSubtrees(selected)
+func handleUpdatesAndPushes(selected []Repo) {
+	if useSubtree {
+		if updateMode {
+			updateSubtrees(selected)
+		}
+		if pushMode {
+			pushSubtrees(selected)
+		}
 	}
 }
 
