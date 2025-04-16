@@ -51,7 +51,6 @@ var (
 	autoMode   = false
 	updateMode = false
 	pushMode   = false
-	scanLocal  = false
 
 	configFile = "config.json"
 
@@ -79,7 +78,6 @@ func setupConfig(cfg Config) {
 	autoMode = cfg.AutoMode
 	updateMode = cfg.UpdateMode
 	pushMode = cfg.PushMode
-	scanLocal = cfg.ScanLocal
 }
 
 func handleLocalRepos(cfg Config) {
