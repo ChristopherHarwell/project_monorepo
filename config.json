@@ -5,5 +5,7 @@
   "auto_mode": false,
   "update_mode": false,
   "push_mode": false,
-  "scan_local": false
+  "scan_local": false,
+  "base_dir": "path/to/base/dir",
+  "monorepo_path": "path/to/monorepo"
 }

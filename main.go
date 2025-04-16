@@ -39,12 +39,14 @@ type Config struct {
 	UpdateMode  bool   `json:"update_mode"`
 	PushMode    bool   `json:"push_mode"`
 	ScanLocal   bool   `json:"scan_local"`
+	BaseDir     string `json:"base_dir"`
+	MonorepoPath string `json:"monorepo_path"`
 }
 
 var (
 	cacheFile   = "repo_cache.json"
 	monorepoDir = "monorepo"
-	useSubtree  = true
+	useSubtree  = false
 
 	autoMode   = false
 	updateMode = false
@@ -64,10 +66,12 @@ func main() {
 
 	if scanLocal {
 		fmt.Println("Scanning local repositories...")
-		baseDir := "/Users/guest1/iCloud Drive (Archive) - 2/Documents/1_Projects/"
-		monorepoPath := "/Users/guest1/iCloud Drive (Archive) - 2/Documents/1_Projects/project_monorepo"
+		if cfg.BaseDir == "" || cfg.MonorepoPath == "" {
+			fmt.Println("Error: 'base_dir' and 'monorepo_path' must be set in config.json when scan_local is true")
+			os.Exit(1)
+		}
 
-		localRepos, err := searchLocalRepos(baseDir, monorepoPath)
+		localRepos, err := searchLocalRepos(cfg.BaseDir, cfg.MonorepoPath)
 		if err != nil {
 			fmt.Printf("Error scanning local repositories: %v\n", err)
 			os.Exit(1)
