@@ -1,0 +1,24 @@
+name: 'Go Tests'
+description: 'Run Go unit tests'
+inputs:
+  go-version:
+    description: 'Go version to use'
+    required: true
+    default: '1.21'
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ inputs.go-version }}
+      shell: bash
+
+    - name: Check out code
+      uses: actions/checkout@v4
+      shell: bash
+
+    - name: Run tests
+      run: go test -v ./...
+      shell: bash 
+        
