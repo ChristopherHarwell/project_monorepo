@@ -533,7 +533,7 @@ func addRepos(selected []Repo) {
 	}
 
 	failed, success := attemptInitialAdd(selected)
-	failed, success = retryFailedRepos(failed, success)
+	_, success = retryFailedRepos(failed, success)
 	commitSuccessfulAdds(success)
 }
 
