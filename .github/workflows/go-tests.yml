@@ -1,0 +1,25 @@
+name: Go CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/actions/go-build
+        with:
+          go-version: '1.21'
+
+  test:
+    name: Run Unit Tests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/actions/go-tests
+        with:
+          go-version: '1.21'
