@@ -1,0 +1,6 @@
+github.com/ChristopherHarwell/git_repo_finder v0.0.0-20250418193003-fdc27c7c87cf h1:zRJ1nLptl2D8FmkIim0owl54H/u1nVTcNNgInt4hd0Q=
+github.com/ChristopherHarwell/git_repo_finder v0.0.0-20250418193003-fdc27c7c87cf/go.mod h1:60GEycpYsuEsdNE2YPJkOwOMopHAXURYZDBLvT8syrs=
+github.com/mattn/go-runewidth v0.0.9 h1:Lm995f3rfxdpd6TSmuVCHVb/QhupuXlYr8sCI/QdE+0=
+github.com/mattn/go-runewidth v0.0.9/go.mod h1:H031xJmbD/WCDINGzjvQ9THkh0rPKHF+m2gUSrubnMI=
+github.com/olekukonko/tablewriter v0.0.5 h1:P2Ga83D34wi1o9J6Wh1mRuqd4mF/x/lgBS7N7AbDhec=
+github.com/olekukonko/tablewriter v0.0.5/go.mod h1:hPp6KlRPjbx+hW8ykQs1w3UBbZlj6HuIJcUGPhkA7kY=
