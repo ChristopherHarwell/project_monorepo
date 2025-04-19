@@ -32,14 +32,14 @@ type LocalRepo struct {
 }
 
 type Config struct {
-	GitHubToken string `json:"github_token"`
-	GitLabToken string `json:"gitlab_token"`
-	UseSubtree  bool   `json:"use_subtree"`
-	AutoMode    bool   `json:"auto_mode"`
-	UpdateMode  bool   `json:"update_mode"`
-	PushMode    bool   `json:"push_mode"`
-	ScanLocal   bool   `json:"scan_local"`
-	BaseDir     string `json:"base_dir"`
+	GitHubToken  string `json:"github_token"`
+	GitLabToken  string `json:"gitlab_token"`
+	UseSubtree   bool   `json:"use_subtree"`
+	AutoMode     bool   `json:"auto_mode"`
+	UpdateMode   bool   `json:"update_mode"`
+	PushMode     bool   `json:"push_mode"`
+	ScanLocal    bool   `json:"scan_local"`
+	BaseDir      string `json:"base_dir"`
 	MonorepoPath string `json:"monorepo_path"`
 }
 
@@ -145,7 +145,7 @@ func selectRepositories(repos []Repo, autoMode bool) []Repo {
 	if autoMode {
 		return repos
 	}
-	
+
 	selected := interactiveSelectRepos(repos)
 	if len(selected) == 0 {
 		fmt.Println("No selection made. Defaulting to all repositories.")
@@ -174,16 +174,25 @@ func handleUpdatesAndPushes(selected []Repo) {
 	}
 }
 
-func loadConfig() Config {
-	data, err := os.ReadFile(configFile)
+func ThrowMissingConfigError(err error) {
 	if err != nil {
 		panic("Missing config.json file with GitHub and GitLab tokens")
 	}
-	var cfg Config
-	err = json.Unmarshal(data, &cfg)
+}
+
+func ThrowConfigJsonError(err error) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func loadConfig() Config {
+	data, err := os.ReadFile(configFile)
+
+	ThrowMissingConfigError(err)
+	var cfg Config
+	err = json.Unmarshal(data, &cfg)
+	ThrowConfigJsonError(err)
 	return cfg
 }
 
@@ -214,10 +223,10 @@ func fetchAllRepos(ctx context.Context, cfg Config) []Repo {
 func fetchGitHubRepos(token string) []Repo {
 	client := createGitHubClient()
 	headers := githubHeaders(token)
-	
+
 	userRepos := fetchUserRepos(client, headers)
 	orgRepos := fetchOrgRepos(client, headers)
-	
+
 	return append(userRepos, orgRepos...)
 }
 
@@ -239,7 +248,7 @@ func fetchUserRepos(client *http.Client, headers map[string]string) []Repo {
 func fetchOrgRepos(client *http.Client, headers map[string]string) []Repo {
 	var orgRepos []Repo
 	orgs := fetchOrganizations(client, headers)
-	
+
 	for _, org := range orgs {
 		orgURL := fmt.Sprintf(githubAPIURL+"/orgs/%s/repos?per_page=100", org["login"].(string))
 		orgRepos = append(orgRepos, fetchGitHubRepoList(client, headers, orgURL)...)
@@ -300,7 +309,7 @@ func fetchGitLabRepos(token string) []Repo {
 	fmt.Println("Fetching GitLab repositories...")
 	req := createGitLabRequest(token)
 	resp, err := executeGitLabRequest(req)
-	
+
 	if err != nil {
 		fmt.Printf("Error connecting to GitLab API: %v\n", err)
 		return nil
@@ -419,7 +428,7 @@ func selectIntegrationMethod() {
 func initMonorepo() {
 	absPath := getMonorepoPath()
 	createMonorepoDirectories(absPath)
-	
+
 	if !isGitInitialized(absPath) {
 		initializeNewMonorepo(absPath)
 	} else {
@@ -547,7 +556,7 @@ func attemptInitialAdd(repos []Repo) ([]Repo, []Repo) {
 			fmt.Printf("Skipping %s: already exists\n", r.Name)
 			continue
 		}
-		
+
 		if addSingleRepo(r) {
 			success = append(success, r)
 		} else {
@@ -568,7 +577,7 @@ func retryFailedRepos(failed, success []Repo) ([]Repo, []Repo) {
 		if repoExists(r) {
 			continue
 		}
-		
+
 		if addSingleRepo(r) {
 			success = append(success, r)
 		} else {
