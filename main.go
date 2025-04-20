@@ -144,16 +144,23 @@ func getRepositories(ctx context.Context, cfg Config) []Repo {
 	return repos
 }
 
+func GetAllRepositories(selectedRepos, allRepos []Repo) []Repo {
+	if len(selectedRepos) == 0 {
+		fmt.Println("No selection made. Defaulting to all repositories.")
+		return allRepos
+	}
+
+	return selectedRepos
+}
+
 func selectRepositories(repos []Repo, autoMode bool) []Repo {
 	if autoMode {
 		return repos
 	}
 
 	selected := interactiveSelectRepos(repos)
-	if len(selected) == 0 {
-		fmt.Println("No selection made. Defaulting to all repositories.")
-		return repos
-	}
+
+	GetAllRepositories(selected, repos)
 	return selected
 }
 
