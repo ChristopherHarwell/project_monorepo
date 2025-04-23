@@ -80,12 +80,6 @@ func setupConfig(cfg Config) {
 	pushMode = cfg.PushMode
 }
 
-func ThrowLocalScanErr(err error) {
-	if err != nil {
-		fmt.Printf("Error scanning local repositories: %v\n", err)
-		os.Exit(1)
-	}
-}
 func handleLocalRepos(cfg Config) {
 	fmt.Println("Scanning local repositories...")
 	if cfg.BaseDir == "" || cfg.MonorepoPath == "" {
@@ -94,7 +88,10 @@ func handleLocalRepos(cfg Config) {
 	}
 
 	localRepos, err := searchLocalRepos(cfg.BaseDir, cfg.MonorepoPath)
-	ThrowLocalScanErr(err)
+	if err != nil {
+		fmt.Printf("Error scanning local repositories: %v\n", err)
+		os.Exit(1)
+	}
 
 	printLocalRepos(localRepos)
 	saveLocalReposData(localRepos)
